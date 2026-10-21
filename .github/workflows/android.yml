@@ -16,7 +16,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Java Environment Setup (modern Kotlin DSL ke liye Java 17 standard hai)
+      # 2. Java Environment Setup
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -34,15 +34,26 @@ jobs:
           chmod +x "$GRADLEW_PATH"
           echo "GRADLEW_DIR=$(dirname "$GRADLEW_PATH")" >> $GITHUB_ENV
 
-      # 4. Jex AI App ka Debug APK build karna (Bina kisi folder error ke)
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
+      # 4. Missing properties files ki galti ko rokne ke liye khali dummy files banana
+      - name: Create Dummy Properties Files
+        run: |
+          touch keystore.properties
+          touch license-config.properties
+          echo "storeFile=dummy" >> keystore.properties
+          echo "storePassword=dummy" >> keystore.properties
+          echo "keyAlias=dummy" >> keystore.properties
+          echo "keyPassword=dummy" >> keystore.properties
         working-directory: ${{ env.GRADLEW_DIR }}
 
-      # 5. Build huye APK ko artifact mein upload karna taaki aap ise download kar sakein
+      # 5. Jex AI App ka Debug APK build karna (Sirf direct variant ke liye taaki koi confusion na ho)
+      - name: Build Debug APK
+        run: ./gradlew assembleDirectDebug
+        working-directory: ${{ env.GRADLEW_DIR }}
+
+      # 6. Build huye APK ko artifact mein upload karna
       - name: Upload Build APK
         uses: actions/upload-artifact@v4
         with:
           name: jex-ai-debug-apk
-          path: "**/build/outputs/apk/debug/app-debug.apk"
+          path: "**/build/outputs/apk/direct/debug/*.apk"
           
